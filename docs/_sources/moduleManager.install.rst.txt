@@ -1,0 +1,7 @@
+moduleManager\.install module
+=============================
+
+.. automodule:: moduleManager.install
+    :members:
+    :undoc-members:
+    :show-inheritance:

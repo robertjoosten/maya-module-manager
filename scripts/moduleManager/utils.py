@@ -150,7 +150,7 @@ def parseModuleLine(line):
     to the module which is defined in the lines above this one. If that is the
     case None is returned.
 
-    :param line:
+    :param str line:
     :return: Module data
     :rtype: generator
     """

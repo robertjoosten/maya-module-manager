@@ -9,7 +9,7 @@ Installation
 Usage
 =====
 
-.. figure:: /_images/moduleManagerExample.gif
+.. figure:: /_images/moduleManagerExample.png
    :align: center
 
 Modules can be (de)activated by toggling the checkbox **[2]**. The user is

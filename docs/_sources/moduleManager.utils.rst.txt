@@ -1,0 +1,7 @@
+moduleManager\.utils module
+===========================
+
+.. automodule:: moduleManager.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
