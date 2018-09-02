@@ -101,7 +101,7 @@ class MayaModuleDetail(utils.QWidget):
         f.setFlat(True)
         f.setIcon(utils.QIcon(FILE_ICON_PATH))
         f.setFixedSize(utils.QSize(18, 18))
-        f.released.connect(self.openPathToModule)
+        f.released.connect(partial(webbrowser.open, self.path))
         f.setToolTip("Open module content path with associated browser")
         layout.addWidget(f)
 
@@ -151,18 +151,6 @@ class MayaModuleDetail(utils.QWidget):
 
         # emit signal
         self.enabledChanged.emit(state, data)
-
-    # ------------------------------------------------------------------------
-
-    def openPathToModule(self):
-        """
-        Open the path of the module in the file browser.
-        :raise ValueError: When path to module doesn't exist
-        """
-        if not os.path.exists(self.path):
-            raise ValueError("Path to module doesn't exist!")
-
-        webbrowser.open(self.path)
 
     # ------------------------------------------------------------------------
 
