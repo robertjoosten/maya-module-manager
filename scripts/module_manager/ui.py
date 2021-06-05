@@ -49,6 +49,7 @@ class MayaModuleDetail(QtWidgets.QWidget):
         # variables
         self._data = data
         self._path = self.get_path()
+        scale_factor = self.logicalDpiX() / 96.0
 
         # create layout
         layout = QtWidgets.QHBoxLayout(self)
@@ -70,7 +71,7 @@ class MayaModuleDetail(QtWidgets.QWidget):
         version = QtWidgets.QLabel(self)
         version.setFont(FONT)
         version.setText(data.get("VERSION"))
-        version.setFixedWidth(85)
+        version.setFixedWidth(85 * scale_factor)
         layout.addWidget(version)
 
         # create maya version
@@ -90,7 +91,7 @@ class MayaModuleDetail(QtWidgets.QWidget):
         browser.setEnabled(True if self.path else False)
         browser.setFlat(True)
         browser.setIcon(QtGui.QIcon(FILE_ICON_PATH))
-        browser.setFixedSize(QtCore.QSize(18, 18))
+        browser.setFixedSize(QtCore.QSize(18 * scale_factor, 18 * scale_factor))
         browser.released.connect(partial(webbrowser.open, self.path))
         browser.setToolTip("Open module content path with associated browser")
         layout.addWidget(browser)
@@ -163,6 +164,7 @@ class MayaModuleFileHeader(QtWidgets.QWidget):
 
     def __init__(self, parent, path, show_all):
         super(MayaModuleFileHeader, self).__init__(parent)
+        scale_factor = self.logicalDpiX() / 96.0
 
         # create layout
         layout = QtWidgets.QHBoxLayout(self)
@@ -173,7 +175,7 @@ class MayaModuleFileHeader(QtWidgets.QWidget):
         browser = QtWidgets.QPushButton(self)
         browser.setFlat(True)
         browser.setIcon(QtGui.QIcon(FILE_ICON_PATH))
-        browser.setFixedSize(QtCore.QSize(18, 18))
+        browser.setFixedSize(QtCore.QSize(18 * scale_factor, 18 * scale_factor))
         browser.released.connect(partial(webbrowser.open, path))
         browser.setToolTip("Open module file with associated application")
         layout.addWidget(browser)
@@ -190,7 +192,7 @@ class MayaModuleFileHeader(QtWidgets.QWidget):
 
         # create checkbox
         self._check_box = QtWidgets.QCheckBox(self)
-        self._check_box.setFixedWidth(80)
+        self._check_box.setFixedWidth(80 * scale_factor)
         self._check_box.setFont(FONT)
         self._check_box.setText("show all")
         self._check_box.setChecked(show_all)
@@ -294,13 +296,14 @@ class MayaModuleFile(QtWidgets.QFrame):
 class MayaModuleManager(QtWidgets.QWidget):
     def __init__(self, parent):
         super(MayaModuleManager, self).__init__(parent)
+        scale_factor = self.logicalDpiX() / 96.0
         
         # set ui
         self.setParent(parent)        
         self.setWindowFlags(QtCore.Qt.Window)
         self.setWindowTitle("Maya Module Manager")
         self.setWindowIcon(QtGui.QIcon(ICON_PATH))
-        self.resize(700, 400)
+        self.resize(700 * scale_factor, 400 * scale_factor)
 
         # create container layout
         container = QtWidgets.QVBoxLayout(self)
