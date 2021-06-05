@@ -1,7 +1,7 @@
-moduleManager\.install module
+module\_manager\.utils module
 =============================
 
-.. automodule:: moduleManager.install
+.. automodule:: module_manager.utils
     :members:
     :undoc-members:
     :show-inheritance:

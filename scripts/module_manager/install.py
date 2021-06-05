@@ -1,22 +1,16 @@
-from maya import cmds, mel
-
-
-# ----------------------------------------------------------------------------
+from maya import cmds
+from maya import mel
 
 
 ROOT_PACKAGE = __name__.rsplit(".", 1)[0]
-
 SHELF_NAME = "MiscTools"
 SHELF_TOOL = {
-    "label": "moduleManager",
+    "label": "module-manager",
     "command": "import {0}.ui; {0}.ui.show()".format(ROOT_PACKAGE),
-    "annotation": "Manage Maya modules",
+    "annotation": "Manage maya modules",
     "image1": "MM_icon.png",
     "sourceType": "python"
 }
-
-
-# ----------------------------------------------------------------------------
 
 
 def shelf():
@@ -27,14 +21,12 @@ def shelf():
     a new one will be created in its place.
     """
     # get top shelf
-    gShelfTopLevel = mel.eval("$tmpVar=$gShelfTopLevel")
-
-    # get top shelf names
-    shelves = cmds.tabLayout(gShelfTopLevel, query=1, ca=1)
+    shelf_container = mel.eval("$tmpVar=$gShelfTopLevel")
+    shelves = cmds.tabLayout(shelf_container, query=True, childArray=True)
 
     # create shelf
     if SHELF_NAME not in shelves:
-        cmds.shelfLayout(SHELF_NAME, parent=gShelfTopLevel)
+        cmds.shelfLayout(SHELF_NAME, parent=shelf_container)
 
     # get existing members
     names = cmds.shelfLayout(SHELF_NAME, query=True, childArray=True) or []
@@ -42,7 +34,7 @@ def shelf():
 
     # delete existing button
     if SHELF_TOOL.get("label") in labels:
-        index = labels.index(SHELF_TOOL.get("label"))
+        index = labels.index(SHELF_TOOL["label"])
         cmds.deleteUI(names[index])
 
     # add button

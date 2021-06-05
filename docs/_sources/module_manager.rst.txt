@@ -1,0 +1,18 @@
+module\_manager package
+=======================
+
+.. automodule:: module_manager
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   module_manager.constants
+   module_manager.install
+   module_manager.ui
+   module_manager.utils
+

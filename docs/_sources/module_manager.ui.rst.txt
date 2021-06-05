@@ -1,0 +1,7 @@
+module\_manager\.ui module
+==========================
+
+.. automodule:: module_manager.ui
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,109 +1,106 @@
 import os
 import webbrowser
 from functools import partial
+from PySide2 import QtWidgets, QtGui, QtCore
 
-from maya import cmds
-from . import utils
-
-
-# ----------------------------------------------------------------------------
+from module_manager import utils
+from module_manager.constants import MAYA_ARGUMENTS
 
 
-ICON_PATH = utils.getIconPath("MM_icon.png")
+FONT = QtGui.QFont()
+FONT.setFamily("Consolas")
+BOLT_FONT = QtGui.QFont()
+BOLT_FONT.setFamily("Consolas")
+BOLT_FONT.setWeight(100)
+
+ICON_PATH = utils.get_icon_path("MM_icon.png")
 FILE_ICON_PATH = ":/fileOpen.png"
+ORANGE_STYLESHEET = "color: orange; text-align: left"
 
 
-# ----------------------------------------------------------------------------
-
-
-class MayaModuleDetailArgument(utils.QWidget):
+class MayaModuleDetailArgument(QtWidgets.QWidget):
     def __init__(self, parent, key, value):
-        utils.QWidget.__init__(self, parent)
+        super(MayaModuleDetailArgument, self).__init__(parent)
 
         # create layout
-        layout = utils.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
         # create key
-        label = utils.QLabel(self)
-        label.setFont(utils.BOLT_FONT)
+        label = QtWidgets.QLabel(self)
+        label.setFont(BOLT_FONT)
         label.setText(key)
         layout.addWidget(label)
 
         # create value
-        label = utils.QLabel(self)
-        label.setFont(utils.FONT)
+        label = QtWidgets.QLabel(self)
+        label.setFont(FONT)
         label.setText(value)
         layout.addWidget(label)
 
 
-class MayaModuleDetail(utils.QWidget):
-    enabledChanged = utils.Signal(bool, dict)
+class MayaModuleDetail(QtWidgets.QWidget):
+    enabled_changed = QtCore.Signal(bool, dict)
 
     def __init__(self, parent, data):
-        utils.QWidget.__init__(self, parent)
+        super(MayaModuleDetail, self).__init__(parent)
 
         # variables
         self._data = data
-        self._path = self.getPath()
+        self._path = self.get_path()
 
         # create layout
-        layout = utils.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(7, 0, 7, 0)
         layout.setSpacing(3)
 
         # create enabled
-        enabledState = True if data.get("ENABLED") == "+" else False
+        enabled_state = data.get("ENABLED") == "+"
 
-        enabled = utils.QCheckBox(self)
-        enabled.setChecked(enabledState)
-        enabled.setFont(utils.BOLT_FONT)
+        enabled = QtWidgets.QCheckBox(self)
+        enabled.setChecked(enabled_state)
+        enabled.setFont(BOLT_FONT)
         enabled.setText(data.get("NAME"))
-        enabled.stateChanged.connect(self._emitEnabledChanged)
+        enabled.stateChanged.connect(self._emit_enabled_changed)
         enabled.setToolTip("Enable/Disable module")
         layout.addWidget(enabled)
 
         # create version
-        version = utils.QLabel(self)
-        version.setFont(utils.FONT)
+        version = QtWidgets.QLabel(self)
+        version.setFont(FONT)
         version.setText(data.get("VERSION"))
         version.setFixedWidth(85)
         layout.addWidget(version)
 
         # create maya version
-        mayaVersion = MayaModuleDetailArgument(
-            self,
-            "Maya Version:",
-            data.get("MAYAVERSION", "-")
-        )
-        layout.addWidget(mayaVersion)
+        maya_version = MayaModuleDetailArgument(self, "Maya Version:", data.get("MAYAVERSION", "-"))
+        layout.addWidget(maya_version)
 
         # create platform
-        platform = MayaModuleDetailArgument(
-            self,
-            "Platform:",
-            data.get("PLATFORM", "-")
-        )
+        platform = MayaModuleDetailArgument(self, "Platform:", data.get("PLATFORM", "-"))
         layout.addWidget(platform)
 
         # create language
-        language = MayaModuleDetailArgument(
-            self,
-            "Locale:",
-            data.get("LOCALE", "-")
-        )
+        language = MayaModuleDetailArgument(self, "Locale:", data.get("LOCALE", "-"))
         layout.addWidget(language)
 
         # create path
-        f = utils.QPushButton(self)
-        f.setEnabled(True if self.path else False)
-        f.setFlat(True)
-        f.setIcon(utils.QIcon(FILE_ICON_PATH))
-        f.setFixedSize(utils.QSize(18, 18))
-        f.released.connect(partial(webbrowser.open, self.path))
-        f.setToolTip("Open module content path with associated browser")
-        layout.addWidget(f)
+        browser = QtWidgets.QPushButton(self)
+        browser.setEnabled(True if self.path else False)
+        browser.setFlat(True)
+        browser.setIcon(QtGui.QIcon(FILE_ICON_PATH))
+        browser.setFixedSize(QtCore.QSize(18, 18))
+        browser.released.connect(partial(webbrowser.open, self.path))
+        browser.setToolTip("Open module content path with associated browser")
+        layout.addWidget(browser)
+
+    def _emit_enabled_changed(self, state):
+        """
+        :param bool state:
+        """
+        data = self.data.copy()
+        self.enabled_changed.emit(state, data)
 
     # ------------------------------------------------------------------------
 
@@ -123,7 +120,7 @@ class MayaModuleDetail(utils.QWidget):
         """
         return self._path
 
-    def getPath(self):
+    def get_path(self):
         """
         :return: Path to module
         :rtype: str
@@ -142,19 +139,7 @@ class MayaModuleDetail(utils.QWidget):
 
     # ------------------------------------------------------------------------
 
-    def _emitEnabledChanged(self, state):
-        """
-        :param bool state:
-        """
-        # copy data data
-        data = self.data.copy()
-
-        # emit signal
-        self.enabledChanged.emit(state, data)
-
-    # ------------------------------------------------------------------------
-
-    def isCompatible(self):
+    def is_compatible(self):
         """
         Validate the data against the current version of Maya ran, the
         platform it's ran on and it's language.
@@ -163,7 +148,7 @@ class MayaModuleDetail(utils.QWidget):
         :rtype: bool
         """
         # validate data against current version of maya, the platform its ran
-        for key, value in utils.MAYA_ARGUMENTS.iteritems():
+        for key, value in MAYA_ARGUMENTS.items():
             if key not in self.data:
                 continue
 
@@ -173,77 +158,75 @@ class MayaModuleDetail(utils.QWidget):
         return True
 
 
-# ----------------------------------------------------------------------------
+class MayaModuleFileHeader(QtWidgets.QWidget):
+    show_all_changed = QtCore.Signal(bool)
 
-
-class MayaModuleFileHeader(utils.QWidget):
-    showAllChanged = utils.Signal(bool)
-
-    def __init__(self, parent, path, showAll):
-        utils.QWidget.__init__(self, parent)
+    def __init__(self, parent, path, show_all):
+        super(MayaModuleFileHeader, self).__init__(parent)
 
         # create layout
-        layout = utils.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
         # create path
-        f = utils.QPushButton(self)
-        f.setFlat(True)
-        f.setIcon(utils.QIcon(FILE_ICON_PATH))
-        f.setFixedSize(utils.QSize(18, 18))
-        f.released.connect(partial(webbrowser.open, path))
-        f.setToolTip("Open module file with associated application")
-        layout.addWidget(f)
+        browser = QtWidgets.QPushButton(self)
+        browser.setFlat(True)
+        browser.setIcon(QtGui.QIcon(FILE_ICON_PATH))
+        browser.setFixedSize(QtCore.QSize(18, 18))
+        browser.released.connect(partial(webbrowser.open, path))
+        browser.setToolTip("Open module file with associated application")
+        layout.addWidget(browser)
 
         # create text
-        button = utils.QPushButton(self)
+        button = QtWidgets.QPushButton(self)
         button.setFlat(True)
-        button.setFont(utils.BOLT_FONT)
+        button.setFont(BOLT_FONT)
         button.setText(os.path.basename(path))
-        button.setStyleSheet(utils.ORANGE_STYLESHEET)
+        button.setStyleSheet(ORANGE_STYLESHEET)
         button.setToolTip(path)
-        button.released.connect(self.toggleCheckBox)
+        button.released.connect(self.toggle_check_box)
         layout.addWidget(button)
 
         # create checkbox
-        self._checkbox = utils.QCheckBox(self)
-        self._checkbox.setFixedWidth(80)
-        self._checkbox.setFont(utils.FONT)
-        self._checkbox.setText("show all")
-        self._checkbox.setChecked(showAll)
-        self._checkbox.stateChanged.connect(self.showAllChanged.emit)
-        layout.addWidget(self._checkbox)
+        self._check_box = QtWidgets.QCheckBox(self)
+        self._check_box.setFixedWidth(80)
+        self._check_box.setFont(FONT)
+        self._check_box.setText("show all")
+        self._check_box.setChecked(show_all)
+        self._check_box.stateChanged.connect(self.show_all_changed.emit)
+        layout.addWidget(self._check_box)
 
     # ------------------------------------------------------------------------
 
-    def toggleCheckBox(self):
+    def toggle_check_box(self):
         """
         Toggle the checked state of the checkbox.
         """
-        self._checkbox.setChecked(not self._checkbox.isChecked())
+        state = self._check_box.isChecked()
+        self._check_box.setChecked(not state)
 
 
-class MayaModuleFile(utils.QFrame):
+class MayaModuleFile(QtWidgets.QFrame):
     def __init__(self, parent, path):
-        utils.QFrame.__init__(self, parent)
+        super(MayaModuleFile, self).__init__(parent)
 
         # variables
-        showAll = False
+        show_all = False
         self._path = path
 
         # set outline
-        self.setFrameShape(utils.QFrame.Box)
-        self.setFrameShadow(utils.QFrame.Sunken)
+        self.setFrameShape(QtWidgets.QFrame.Box)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
 
         # create layout
-        layout = utils.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(3)
 
         # create header
-        header = MayaModuleFileHeader(self, path, showAll=showAll)
-        header.showAllChanged.connect(self.manageModuleDetails)
+        header = MayaModuleFileHeader(self, path, show_all=show_all)
+        header.show_all_changed.connect(self.manage_module_details)
         layout.addWidget(header)
 
         # create divider
@@ -255,8 +238,8 @@ class MayaModuleFile(utils.QFrame):
             self.setEnabled(False)
 
         # add module details
-        self.addModuleDetails()
-        self.manageModuleDetails(showAll)
+        self.add_module_details()
+        self.manage_module_details(show_all)
 
     # ------------------------------------------------------------------------
 
@@ -270,7 +253,7 @@ class MayaModuleFile(utils.QFrame):
 
     # ------------------------------------------------------------------------
 
-    def manageModuleDetails(self, state):
+    def manage_module_details(self, state):
         """
         Loop all widgets and either display all or filter the ones that are
         capable with the version of Maya that is ran.
@@ -278,96 +261,80 @@ class MayaModuleFile(utils.QFrame):
         :param bool state:
         """
         for i in range(self.layout().count()):
-            # get widget
             widget = self.layout().itemAt(i).widget()
-
-            # check widget type
             if not isinstance(widget, MayaModuleDetail):
                 continue
 
-            # set widget visibility
-            visible = True if state else widget.isCompatible()
+            visible = True if state else widget.is_compatible()
             widget.setVisible(visible)
 
-    def addModuleDetails(self):
+    def add_module_details(self):
         """
         Populate the widget with module data widgets, one for each module data
         line found in the module file.
         """
-        for data in utils.filterModuleFile(self.path):
+        for data in utils.filter_module_file(self.path):
             mod = MayaModuleDetail(self, data)
-            mod.enabledChanged.connect(self.updateModuleFile)
+            mod.enabled_changed.connect(self.update_module_file)
             self.layout().addWidget(mod)
 
     # ------------------------------------------------------------------------
 
-    def updateModuleFile(self, state, data):
+    def update_module_file(self, state, data):
         """
         :param bool state:
         :param dict data:
         """
-        utils.updateModuleFile(self.path, state, data)
+        utils.update_module_file(self.path, state, data)
 
 
 # ----------------------------------------------------------------------------
 
 
-class MayaModuleManager(utils.QWidget):
+class MayaModuleManager(QtWidgets.QWidget):
     def __init__(self, parent):
-        utils.QWidget.__init__(self, parent)
+        super(MayaModuleManager, self).__init__(parent)
         
         # set ui
         self.setParent(parent)        
-        self.setWindowFlags(utils.Qt.Window)  
-
+        self.setWindowFlags(QtCore.Qt.Window)
         self.setWindowTitle("Maya Module Manager")
-        self.setWindowIcon(utils.QIcon(ICON_PATH))
-        
+        self.setWindowIcon(QtGui.QIcon(ICON_PATH))
         self.resize(700, 400)
 
         # create container layout
-        container = utils.QVBoxLayout(self)
+        container = QtWidgets.QVBoxLayout(self)
         container.setContentsMargins(0, 0, 0, 0)
         container.setSpacing(3)
 
         # create scroll widget
-        widget = utils.QWidget(self)
-        self._layout = utils.QVBoxLayout(widget)
+        widget = QtWidgets.QWidget(self)
+        self._layout = QtWidgets.QVBoxLayout(widget)
         self._layout.setContentsMargins(3, 3, 3, 3)
         self._layout.setSpacing(3)
 
-        scroll = utils.QScrollArea(self)
-        scroll.setFocusPolicy(utils.Qt.NoFocus)
+        scroll = QtWidgets.QScrollArea(self)
+        scroll.setFocusPolicy(QtCore.Qt.NoFocus)
         scroll.setWidgetResizable(True)
         scroll.setWidget(widget)
         container.addWidget(scroll)
 
         # add modules
-        self.addModules()
+        self.add_modules()
 
     # ------------------------------------------------------------------------
 
-    def addWidget(self, widget):
-        """
-        :param QWidget widget:
-        """
-        self._layout.addWidget(widget)
-
-    # ------------------------------------------------------------------------
-
-    def addModules(self):
+    def add_modules(self):
         """
         Populate the widget with module file widgets, one for each module file
         found.
         """
-        for path in utils.getModuleFiles():
+        for path in utils.get_module_file_paths():
             mod = MayaModuleFile(self, path)
-            self.addWidget(mod)
-
-
-# ----------------------------------------------------------------------------
+            self._layout.addWidget(mod)
 
 
 def show():
-    dialog = MayaModuleManager(utils.mayaWindow())
-    dialog.show()
+    parent = utils.get_main_window()
+    window = MayaModuleManager(parent)
+    window.show()

@@ -1,7 +1,7 @@
-moduleManager
-=============
+module_manager
+==============
 
 .. toctree::
    :maxdepth: 4
 
-   moduleManager
+   module_manager

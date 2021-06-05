@@ -1,86 +1,39 @@
 import os
-import sys
-import subprocess
-from maya import cmds, OpenMayaUI
+import shiboken2
+from six import integer_types
+from maya import OpenMayaUI
+from PySide2 import QtWidgets, QtGui, QtCore
+
+from module_manager.constants import MODULE_ARGUMENTS
 
 
-# ----------------------------------------------------------------------------
-
-
-# import pyside, do qt version check for maya 2017 >
-qtVersion = cmds.about(qtVersion=True)
-if qtVersion.startswith("4") or type(qtVersion) not in [str, unicode]:
-    from PySide.QtGui import *
-    from PySide.QtCore import *
-    import shiboken
-else:
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
-    from PySide2.QtWidgets import *
-    import shiboken2 as shiboken
-
-
-# ----------------------------------------------------------------------------
-
-
-FONT = QFont()
-FONT.setFamily("Consolas")
-
-BOLT_FONT = QFont()
-BOLT_FONT.setFamily("Consolas")
-BOLT_FONT.setWeight(100)
-
-
-# ----------------------------------------------------------------------------
-
-
-ORANGE_STYLESHEET = "color: orange; text-align: left"
-
-
-# ----------------------------------------------------------------------------
-
-
-MODULE_ARGUMENTS = [
-    "MAYAVERSION",
-    "PLATFORM",
-    "LOCALE",
-]
-
-MAYA_ARGUMENTS = {
-    "MAYAVERSION": cmds.about(version=True),
-    "PLATFORM": cmds.about(operatingSystem=True),
-    "LOCALE": cmds.about(uiLanguage=True),
-}
-
-
-# ----------------------------------------------------------------------------
-
-
-def mayaWindow():
+def get_main_window():
     """
-    Get Maya's main window.
-
-    :rtype: QMainWindow
+    :return: Maya main window
+    :rtype: QtWidgets.QMainWindow/None
+    :raise RuntimeError: When the main window cannot be obtained.
     """
-    window = OpenMayaUI.MQtUtil.mainWindow()
-    window = shiboken.wrapInstance(long(window), QMainWindow)
+    ptr = OpenMayaUI.MQtUtil.mainWindow()
+    ptr = integer_types[-1](ptr)
+    if ptr:
+        return shiboken2.wrapInstance(ptr, QtWidgets.QMainWindow)
 
-    return window
+    raise RuntimeError("Failed to obtain a handle on the Maya main window.")
 
 
-def getIconPath(name):
+def get_icon_path(file_name):
     """
     Get an icon path based on file name. All paths in the XBMLANGPATH variable
     processed to see if the provided icon can be found.
 
-    :param str name:
+    :param str file_name:
     :return: Icon path
     :rtype: str/None
     """
-    for path in os.environ.get("XBMLANGPATH").split(os.pathsep):
-        iconPath = os.path.join(path, name)
-        if os.path.exists(iconPath):
-            return iconPath.replace("\\", "/")
+    for directory in os.environ["XBMLANGPATH"].split(os.pathsep):
+        file_path = os.path.join(directory, file_name)
+        if os.path.exists(file_path):
+            return file_path.replace("\\", "/")
 
 
 # ----------------------------------------------------------------------------
@@ -88,38 +41,36 @@ def getIconPath(name):
 
 def divider(parent):
     """
-    Create divider ui widget.
-
-    :param QWidget parent:
-    :rtype: QFrame
+    :param QtWidgets.QWidget parent:
+    :rtype: QtWidgets.QFrame
     """
-    line = QFrame(parent)
-    line.setFrameShape(QFrame.HLine)
-    line.setFrameShadow(QFrame.Sunken)
+    line = QtWidgets.QFrame(parent)
+    line.setFrameShape(QtWidgets.QFrame.HLine)
+    line.setFrameShadow(QtWidgets.QFrame.Sunken)
     return line
 
 
 # ----------------------------------------------------------------------------
 
 
-def getModulePaths():
+def get_module_paths():
     """
     :return: Maya module paths
-    :rtype: list
+    :rtype: list[str]
     """
-    return os.environ.get("MAYA_MODULE_PATH").split(os.pathsep)
+    return os.environ["MAYA_MODULE_PATH"].split(os.pathsep)
 
 
-def getModuleFiles():
+def get_module_file_paths():
     """
     :return: Maya module files
-    :rtype: list
+    :rtype: list[str]
     """
     # variable
     modules = []
 
     # loop module paths
-    for path in getModulePaths():
+    for path in get_module_paths():
         # make sure path exists, by default maya adds paths to the variable
         # that don't necessarily have to exist.
         if not os.path.exists(path):
@@ -143,7 +94,7 @@ def getModuleFiles():
 # ----------------------------------------------------------------------------
 
 
-def parseModuleLine(line):
+def parse_module_line(line):
     """
     Parse the line of a module, the line needs to start with either a + or a -
     if this is not the case it means it is additional information that belongs
@@ -152,10 +103,10 @@ def parseModuleLine(line):
 
     :param str line:
     :return: Module data
-    :rtype: generator
+    :rtype: dict/None
     """
     # validate line
-    if len(line) < 1 or line[0] not in ["+", "-"]:
+    if len(line) < 1 or line[0] not in {"+", "-"}:
         return
 
     # variable
@@ -183,45 +134,45 @@ def parseModuleLine(line):
     return data
 
 
-def filterModuleFile(path):
+def filter_module_file(file_path):
     """
-    :param str path:
+    :param str file_path:
     :return: Module data
     :rtype: generator
     """
     # read module file
-    lines = readModuleFile(path)
+    lines = read_module_file(file_path)
 
     # filter content
     for line in lines:
-        data = parseModuleLine(line)
+        data = parse_module_line(line)
         if not data:
             continue
 
         yield data
 
 
-def readModuleFile(path):
+def read_module_file(file_path):
     """
-    :param str path:
+    :param str file_path:
     :return: Module content
     :rtype: list
     """
     # read file
-    with open(path, "r") as f:
+    with open(file_path, "r") as f:
         lines = f.readlines()
         lines = [x.strip() for x in lines]
 
     return lines
 
 
-def updateModuleFile(path, state, data):
+def update_module_file(file_path, state, data):
     """
     Update state of module, the module file gets read and the each line will
     be checked if it matches up with the data provided. If it does, that is
     the line that needs its state updated.
 
-    :param str path:
+    :param str file_path:
     :param bool state:
     :param dict data:
     """
@@ -233,19 +184,19 @@ def updateModuleFile(path, state, data):
 
     # read existing file
     content = []
-    lines = readModuleFile(path)
+    lines = read_module_file(file_path)
 
     for line in lines:
         # parse line
-        lineData = parseModuleLine(line)
+        line_data = parse_module_line(line)
 
         # validate line
-        if lineData:
+        if line_data:
             # remove enabled for comparison
-            del lineData["ENABLED"]
+            del line_data["ENABLED"]
 
             # validate line data with provided data
-            if data == lineData:
+            if data == line_data:
                 content.append(enabled + line[1:])
                 continue
 
@@ -256,5 +207,5 @@ def updateModuleFile(path, state, data):
     content = ["{}\n".format(c) for c in content]
 
     # write to file
-    with open(path, "w") as f:
+    with open(file_path, "w") as f:
         f.writelines(content)

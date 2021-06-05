@@ -1,4 +1,10 @@
-from maya import utils
+from maya import cmds
 
-import moduleManager.install
-utils.executeDeferred(moduleManager.install.shelf)
+
+def main():
+    from module_manager import install
+    install.shelf()
+
+
+if not cmds.about(batch=True):
+    cmds.evalDeferred(main)

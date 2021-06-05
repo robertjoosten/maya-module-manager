@@ -4,12 +4,12 @@ Module manager for Maya.
 Installation
 ============
 * Extract the content of the .rar file anywhere on disk.
-* Drag the moduleManager.mel file in Maya to permanently install the script.
+* Drag the module-manager.mel file in Maya to permanently install the script.
 
 Usage
 =====
 
-.. figure:: /_images/moduleManagerExample.png
+.. figure:: /_images/module-manager-example.png
    :align: center
 
 Modules can be (de)activated by toggling the checkbox **[2]**. The user is
